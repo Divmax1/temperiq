@@ -903,7 +903,7 @@ function Dashboard({ user, temperament, percentages, secondaryTemp, isPremium, o
 }
 
 // ─── CHATBOT ──────────────────────────────────────────────────────────────────
-const FREE_MSG_LIMIT = 3;
+const FREE_MSG_LIMIT = 50;
 
 function Chatbot({ user, temperament, isPremium, onUpgrade }) {
   const [messages, setMessages] = useState([
@@ -934,16 +934,22 @@ function Chatbot({ user, temperament, isPremium, onUpgrade }) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
+          model: "claude-sonnet-4-5",
+          max_tokens: 800,
           system: `You are the Temperiq AI guide. Keep it simple, warm, and real. Use everyday language — no fancy words. The user's name is ${user.name}. Their temperament is ${temperament}. Their role is ${user.role}.
 
 Talk like a wise friend who knows them well. Give practical, relatable advice they can actually use today. Keep each reply short — 2-3 sentences max unless they ask for more. Use their temperament traits (${t.strengths.slice(0,3).join(", ")} as strengths; ${t.weaknesses.slice(0,3).join(", ")} as things to watch) to make it personal. No big speeches.`,
           messages: newMsgs,
         }),
       });
-      const data = await res.json();
-      const reply = data.content?.map(c => c.text || "").join("") || "I'm here for you. Could you tell me more?";
+             const data = await res.json();
+          let reply = "I'm having trouble connecting. Please try again.";
+          if (data.content && Array.isArray(data.content)) {
+          reply = data.content.map(c => c.type === "text" ? c.text : "").filter(Boolean).join("");
+          } else if (data.error) {
+          console.error("API error:", data.error);
+          reply = "Something went wrong. Please try again in a moment.";
+          }
       setMessages(m => [...m, { role: "assistant", content: reply }]);
     } catch {
       setMessages(m => [...m, { role: "assistant", content: "I'm having trouble connecting. Please try again in a moment." }]);
