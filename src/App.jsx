@@ -94,7 +94,8 @@ const shuffleArray = arr => {
   const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;
 };
 
-const QUIZ_QUESTIONS = [
+// Full pool of 50 questions — 12 are randomly picked per user each time
+const QUESTION_POOL = [
   {q:"Your boss gives the team a tough deadline. What do you do?",options:[["Jump in and start delegating immediately","C"],["Sit down and map out every step carefully","M"],["Rally everyone's energy and lift the mood","S"],["Stay calm and check that everyone is okay first","P"]]},
   {q:"You're at a party where you barely know anyone. You usually:",options:[["Start introducing yourself and own the conversation","C"],["Find one interesting person and go really deep","M"],["Work the whole room — 5 new friends before it ends","S"],["Stick with the one person you know and enjoy the vibe","P"]]},
   {q:"Someone gives you harsh feedback on your work. Your first reaction:",options:[["Push back — you know what you're doing","C"],["Replay it in your head all night","M"],["Feel hurt but shake it off and vent to a friend","S"],["Say nothing and just adjust quietly","P"]]},
@@ -107,7 +108,55 @@ const QUIZ_QUESTIONS = [
   {q:"How do you handle a disagreement with someone close to you?",options:[["Address it head-on immediately","C"],["Think it through carefully before saying anything","M"],["Talk about your feelings openly","S"],["Smooth it over and avoid the tension","P"]]},
   {q:"What would coworkers most likely say about you?",options:[["'Gets things done — can be intense though'","C"],["'Super detailed and reliable — hard to read'","M"],["'Always the fun one — lifts the whole room'","S"],["'Easiest person to work with — zero drama'","P"]]},
   {q:"You just got exciting news. What do you do first?",options:[["Start planning how to make the most of it","C"],["Think through all the implications quietly first","M"],["Call or text everyone you know right away","S"],["Sit with the feeling before you tell anyone","P"]]},
+  {q:"Your friend group is planning a trip. What's your role?",options:[["You take charge and plan the whole itinerary","C"],["You research the best options and send a detailed breakdown","M"],["You're the hype person — you make everyone excited","S"],["You go with whatever the group decides, no fuss","P"]]},
+  {q:"Someone is late for a meeting with you — again. You:",options:[["Address it directly — you don't tolerate wasted time","C"],["Say nothing but make a mental note for next time","M"],["Crack a joke about it when they arrive","S"],["Assume they had a reason and let it go completely","P"]]},
+  {q:"You get a surprise extra day off work. You spend it:",options:[["Knocking out a project you've been putting off","C"],["Finally reading that book or finishing a personal project","M"],["Calling people and making spontaneous plans","S"],["Doing absolutely nothing — blissfully","P"]]},
+  {q:"When you're learning something new, you prefer:",options:[["Just diving in and figuring it out as you go","C"],["Reading everything about it before starting","M"],["Learning with a group or watching someone explain it","S"],["Taking it slow, step by step, no pressure","P"]]},
+  {q:"A colleague takes credit for your idea in a meeting. You:",options:[["Correct it on the spot — that was your idea","C"],["Fume internally and replay the moment all night","M"],["Laugh it off but tell your work friends after","S"],["Let it go — conflict isn't worth it","P"]]},
+  {q:"Your ideal work environment looks like:",options:[["Fast-paced, high stakes, always moving","C"],["Quiet, structured, and focused with clear goals","M"],["Collaborative, social, and full of energy","S"],["Relaxed, flexible, and low-pressure","P"]]},
+  {q:"How do you feel about surprises?",options:[["Love them only if they involve a new challenge","C"],["Not a fan — you like to plan and prepare","M"],["You live for them — spontaneity is exciting","S"],["Fine either way — you adapt easily","P"]]},
+  {q:"When you're upset, you usually:",options:[["Confront what caused it immediately","C"],["Go quiet and process it alone for a long time","M"],["Talk about it — you need to vent","S"],["Distract yourself and wait for it to pass","P"]]},
+  {q:"You're assigned a group project at work. You naturally:",options:[["Take the lead without being asked","C"],["Handle the research and detailed parts","M"],["Keep everyone motivated and connected","S"],["Support whoever needs help most","P"]]},
+  {q:"Your biggest strength in a crisis is:",options:[["You stay decisive and take action fast","C"],["You analyze calmly and find the smart solution","M"],["You rally people and keep morale up","S"],["You stay calm when everyone else panics","P"]]},
+  {q:"When making a purchase, you usually:",options:[["Buy it if it helps you achieve a goal","C"],["Research reviews and compare options for days","M"],["Buy it if it feels fun or makes you happy","S"],["Wait until you really need it — no rush","P"]]},
+  {q:"How do you recharge after a long week?",options:[["Tackling something productive — idle time drains you","C"],["Alone time with music, a book, or your thoughts","M"],["Hanging out with friends — people energize you","S"],["Long sleep, comfort food, nothing demanding","P"]]},
+  {q:"A stranger asks for your advice on a big life decision. You:",options:[["Give them a direct answer — you know what you'd do","C"],["Ask them lots of questions before giving a thoughtful answer","M"],["Share your honest feelings and personal experience","S"],["Listen more than you speak, offer comfort","P"]]},
+  {q:"When you disagree with your boss, you:",options:[["Speak up — respectfully but clearly","C"],["Write down your thoughts and bring it up carefully later","M"],["Vent to a trusted coworker first","S"],["Go along with it to keep the peace","P"]]},
+  {q:"Your relationship with deadlines is:",options:[["You set them yourself — usually tighter than required","C"],["You meet them but only after obsessing over every detail","M"],["You sometimes push them if something more fun comes up","S"],["You meet them just in time — never early, rarely late","P"]]},
+  {q:"When someone cries in front of you, you:",options:[["Feel slightly uncomfortable but try to offer solutions","C"],["Feel deeply and absorb their pain as your own","M"],["Immediately comfort them with words and warmth","S"],["Give them space and quiet presence without judgment","P"]]},
+  {q:"Your friends would say you're the one who:",options:[["Always knows what to do next","C"],["Remembers details no one else noticed","M"],["Makes every hangout more fun","S"],["Never makes it awkward or dramatic","P"]]},
+  {q:"You've just been given total creative freedom at work. You feel:",options:[["Excited — finally, you can execute your vision","C"],["A little overwhelmed — you work better with clear structure","M"],["Thrilled — this is where you thrive","S"],["Relaxed — you'll figure it out as you go","P"]]},
+  {q:"Your phone battery is at 3% and you have no charger. You:",options:[["Immediately solve the problem — borrow one or find a shop","C"],["Feel anxious about missing something important","M"],["Turn it into a funny story for later","S"],["Shrug and enjoy being unreachable for once","P"]]},
+  {q:"How do you handle someone who keeps interrupting you?",options:[["You address it directly — 'Let me finish.'","C"],["You get quiet and withdraw from the conversation","M"],["You laugh it off but bring extra energy to talk over them","S"],["You let them talk and wait for your turn patiently","P"]]},
+  {q:"When planning your future, you think:",options:[["5-year plan, specific milestones, already in progress","C"],["Deep reflection on meaning and what truly matters","M"],["Exciting possibilities — you love dreaming out loud","S"],["Take it day by day — you trust things will work out","P"]]},
+  {q:"What do you want most from people closest to you?",options:[["Respect and loyalty to your goals","C"],["Deep understanding and emotional safety","M"],["Fun, laughter, and real connection","S"],["Steadiness, peace, and no drama","P"]]},
+  {q:"How do you feel about being the centre of attention?",options:[["You're comfortable — you usually end up there anyway","C"],["Uncomfortable — you prefer depth over spotlight","M"],["You love it — it's where you feel most alive","S"],["You'd rather blend into the background","P"]]},
+  {q:"When you're bored, you typically:",options:[["Start a new project or set a new goal","C"],["Fall into deep research on something random","M"],["Text or call someone — you need stimulation","S"],["Sit with it — boredom doesn't bother you much","P"]]},
+  {q:"How important is winning to you?",options:[["Very — second place is just first loser","C"],["Important only if the work behind it was excellent","M"],["Somewhat — but the experience and people matter more","S"],["Not very — harmony is more important than competition","P"]]},
+  {q:"You walk into a room and notice it's very messy. You:",options:[["Start organizing immediately — you can't focus otherwise","C"],["Feel uneasy and make a mental list of what needs doing","M"],["Don't really notice or care — vibes matter more","S"],["Sit down comfortably — it doesn't bother you at all","P"]]},
+  {q:"What's your approach to apologies?",options:[["You apologize fast if you're wrong — and expect the same","C"],["You take time to reflect before apologizing — you want it to be meaningful","M"],["You apologize warmly and emotionally — you hate tension","S"],["You apologize early to restore peace even if you're unsure you're wrong","P"]]},
+  {q:"A new person joins your friend group. You:",options:[["Size them up quickly — are they adding value?","C"],["Observe quietly before opening up to them","M"],["Welcome them with full energy — new people excite you","S"],["Include them naturally — the more the merrier","P"]]},
+  {q:"When you fail at something, your first thought is:",options:[["What went wrong and how to fix it next time","C"],["A deep and prolonged sense of disappointment in yourself","M"],["It's okay — you'll bounce back and try again soon","S"],["These things happen — no point dwelling","P"]]},
+  {q:"How do you feel about asking for help?",options:[["You'd rather figure it out yourself — asking feels weak","C"],["You research thoroughly before asking anyone","M"],["You ask freely — people love to help you anyway","S"],["You ask when needed but feel a little guilty about it","P"]]},
+  {q:"What does your morning usually look like?",options:[["Up early, workout, to-do list done before 9am","C"],["Slow start — you need quiet time to think before engaging","M"],["Energetic and social — you're already texting people","S"],["Relaxed, unhurried, coffee in hand","P"]]},
+  {q:"When you love someone, you show it by:",options:[["Doing things for them — actions over words","C"],["Deep conversations, remembering every detail about them","M"],["Telling them constantly — words of affirmation all day","S"],["Just being there, steady and present, always","P"]]},
+  {q:"Someone gives you a task with zero instructions. You:",options:[["Get started immediately and sort the details later","C"],["Ask every question until you fully understand the scope","M"],["Make it fun and figure it out with whoever's around","S"],["Start slowly and carefully, making sure you don't mess up","P"]]},
+  {q:"How do you handle a very long queue or wait?",options:[["You find a way to skip it or solve the problem","C"],["You observe, think, and use the time to mentally plan","M"],["You chat with whoever is nearby — it becomes fun","S"],["You wait patiently with zero stress","P"]]},
+  {q:"You're given the chance to speak publicly to 500 people. You feel:",options:[["Ready — this is your moment","C"],["Nervous but you'll prepare until you're confident","M"],["Excited and a little giddy — audiences energize you","S"],["Anxious — you'd rather someone else took this one","P"]]},
+  {q:"How do you treat rules and systems?",options:[["They exist to be optimized — you bend them when needed","C"],["You follow them carefully and expect others to as well","M"],["You follow the spirit of them, not always the letter","S"],["You follow them to keep the peace, rarely question them","P"]]},
+  {q:"When a relationship ends (friendship or romantic), you:",options:[["Move on fast — you focus on what's ahead","C"],["Analyze it for months — what went wrong and why","M"],["Feel it deeply but process it out loud with others","S"],["Feel sad quietly and heal slowly over time","P"]]},
+  {q:"What would you change about yourself if you could?",options:[["Be more patient with people who move slowly","C"],["Stop overthinking and criticizing myself so much","M"],["Be more consistent and follow through more often","S"],["Speak up for myself more and stop avoiding conflict","P"]]},
 ];
+
+// Pick 12 random questions from the pool and shuffle their options
+const getRandomQuestions = () => {
+  const pool = [...QUESTION_POOL];
+  for (let i = pool.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  return pool.slice(0,12).map(q=>({...q, options: shuffleArray(q.options)}));
+};
 
 // ── ICONS ────────────────────────────────────────────────────────────────────
 const Icon = ({ name, size=20 }) => {
@@ -309,7 +358,7 @@ function Auth({ onAuth }) {
 function Quiz({ onComplete }) {
   const [current,setCurrent] = useState(0);
   const [answers,setAnswers] = useState([]);
-  const [shuffled] = useState(()=>QUIZ_QUESTIONS.map(q=>({...q,options:shuffleArray(q.options)})));
+  const [shuffled] = useState(()=>getRandomQuestions());
 
   const handleAnswer = type => {
     const next=[...answers,type];
@@ -625,14 +674,25 @@ export default function App() {
 
   // ── On app load: check if user is already logged in ──────────────────────
   useEffect(()=>{
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const u = session.user;
+    const loadUserData = async (u) => {
+      try {
         // Load profile
-        const { data: profile } = await supabase.from("users").select("*").eq("id", u.id).single();
-        setUser({ name: profile?.name || u.user_metadata?.name || "Friend", email: u.email, role: profile?.role || "individual", uid: u.id });
+        const { data: profile, error: profileErr } = await supabase
+          .from("users").select("*").eq("id", u.id).single();
+        if (profileErr && profileErr.code !== "PGRST116") console.error("Profile error:", profileErr);
+
+        setUser({
+          name: profile?.name || u.user_metadata?.name || u.email.split("@")[0],
+          email: u.email,
+          role: profile?.role || u.user_metadata?.role || "individual",
+          uid: u.id
+        });
+
         // Load saved quiz results
-        const { data: results } = await supabase.from("results").select("*").eq("id", u.id).single();
+        const { data: results, error: resultsErr } = await supabase
+          .from("results").select("*").eq("id", u.id).single();
+        if (resultsErr && resultsErr.code !== "PGRST116") console.error("Results error:", resultsErr);
+
         if (results?.temperament) {
           setTemperament(results.temperament);
           setPercentages(results.percentages);
@@ -642,7 +702,25 @@ export default function App() {
         } else {
           setScreen("quiz");
         }
+      } catch(err) {
+        console.error("Load user data error:", err);
+        setScreen("quiz");
+      }
+    };
+
+    // Check for existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserData(session.user);
       } else {
+        setScreen("onboarding");
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        loadUserData(session.user);
+      } else if (event === "SIGNED_OUT") {
         setScreen("onboarding");
       }
     });
@@ -686,9 +764,6 @@ export default function App() {
           <BottomNav active={navTab} onChange={setNavTab} isPremium={isPremium} onUpgrade={()=>setShowPremium(true)}/>
         </div>
       )}
-      <div style={{ textAlign: "center", padding: "16px", color: "var(--muted)", fontSize: 12, letterSpacing: 1 }}>
-        © 2027 Maxwell Divine · Temperiq
-      </div>
       {showPremium && <PremiumModal onClose={()=>setShowPremium(false)} onPurchase={()=>{setIsPremium(true);setShowPremium(false);}}/>}
     </>
   );
