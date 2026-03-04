@@ -686,6 +686,9 @@ export default function App() {
           <BottomNav active={navTab} onChange={setNavTab} isPremium={isPremium} onUpgrade={()=>setShowPremium(true)}/>
         </div>
       )}
+      <div style={{ textAlign: "center", padding: "16px", color: "var(--muted)", fontSize: 12, letterSpacing: 1 }}>
+        © 2027 Maxwell Divine · Temperiq
+      </div>
       {showPremium && <PremiumModal onClose={()=>setShowPremium(false)} onPurchase={()=>{setIsPremium(true);setShowPremium(false);}}/>}
     </>
   );
