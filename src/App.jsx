@@ -764,7 +764,7 @@ export default function App() {
           <BottomNav active={navTab} onChange={setNavTab} isPremium={isPremium} onUpgrade={()=>setShowPremium(true)}/>
         </div>
       )}
-      {showPremium && <PremiumModal onClose={()=>setShowPremium(false)} onPurchase={()=>{setIsPremium(true);setShowPremium(false);}}/>}
+      {showPremium && <PremiumModal user={user} onClose={()=>setShowPremium(false)} onPurchase={()=>{setIsPremium(true);setShowPremium(false);}}/>}
     </>
   );
 }
