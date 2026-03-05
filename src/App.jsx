@@ -222,6 +222,8 @@ function Onboarding({ onDone }) {
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
+const [otherRole, setOtherRole] = useState("")
+
 function Auth({ onAuth }) {
   const [mode,setMode]       = useState("signup");
   const [name,setName]       = useState("");
@@ -241,11 +243,16 @@ function Auth({ onAuth }) {
   const pwValid = pwRules.every(r=>r.pass);
 
   const roles=[
-    {id:"individual",label:"Individual",  icon:"🧍"},
-    {id:"spouse",    label:"Couple/Spouse",icon:"💑"},
-    {id:"employer",  label:"Manager",     icon:"🏢"},
-    {id:"teacher",   label:"Teacher/Student",icon:"🎓"},
-  ];
+  {id:"individual", label:"Individual",   icon:"🧍"},
+  {id:"spouse",     label:"Couple/Spouse", icon:"💑"},
+  {id:"employer",   label:"Entrepreneur",  icon:"🚀"},
+  {id:"student",    label:"Student",       icon:"🎓"},
+  {id:"other",      label:"Other",         icon:"✦"},
+];
+
+  {role==="other"&&(
+  <input className="input" placeholder="Describe your role..." value={otherRole} onChange={e=>setOtherRole(e.target.value)} style={{marginTop:8}}/>
+)}
 
   const handleSubmit = async () => {
     setError("");
@@ -262,9 +269,9 @@ function Auth({ onAuth }) {
         if (e) throw e;
         // Save profile to users table
         if (data.user){
-          await supabase.from("users").upsert({id:data.user.id,name,email,role});
+          await supabase.from("users").upsert({id:data.user.id,name,email,role:role==="other"?otherRole:role});
         }
-        onAuth({name,email,role,uid:data.user?.id});
+        onAuth({name,email,role:role==="other"?otherRole:role,uid:data.user?.id});
       } else {
         const {data,error:e} = await supabase.auth.signInWithPassword({email,password});
         if (e) throw e;
