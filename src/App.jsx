@@ -532,7 +532,7 @@ function Chatbot({ user, temperament, isPremium, onUpgrade }) {
     try {
       const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         system:`You are the Temperiq AI guide. Keep it simple, warm, and real — use everyday language. The user's name is ${user.name}. Their temperament is ${temperament}. Their role is ${user.role}. Talk like a wise friend. Give practical advice they can use today. Keep replies to 2-3 sentences unless they ask for more. Use their strengths: ${t.strengths.slice(0,3).join(", ")} and watch-outs: ${t.weaknesses.slice(0,3).join(", ")}.`,
-        messages:newMsgs,
+        messages:newMsgs.filter((m,i)=>!(i===0&&m.role==="assistant")),
       })});
       const data=await res.json();
       let reply="I'm having trouble connecting. Please try again.";
