@@ -8,6 +8,12 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "Missing API key" });
 
+  // Strip any leading assistant messages — Anthropic requires user message first
+  const rawMessages = req.body.messages || [];
+  const messages = rawMessages.filter((m, i) => !(i === 0 && m.role === "assistant"));
+
+  if (!messages.length) return res.status(400).json({ error: "No messages provided" });
+
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -20,7 +26,7 @@ export default async function handler(req, res) {
         model: "claude-haiku-4-5-20251001",
         max_tokens: 800,
         system: req.body.system || "You are a helpful assistant.",
-        messages: req.body.messages || [],
+        messages,
       }),
     });
 
