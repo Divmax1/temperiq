@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not set in environment variables" });
+  if (!apiKey) return res.status(500).json({ error: "Missing API key" });
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 500,
+        max_tokens: 800,
         system: req.body.system || "You are a helpful assistant.",
         messages: req.body.messages || [],
       }),
@@ -27,16 +27,11 @@ export default async function handler(req, res) {
     const text = await response.text();
     let data;
     try { data = JSON.parse(text); }
-    catch { return res.status(500).json({ error: "Invalid response from Anthropic", raw: text.slice(0,200) }); }
+    catch { return res.status(500).json({ error: "Bad response from AI", raw: text.slice(0, 200) }); }
 
-    if (!response.ok) {
-      console.error("Anthropic API error:", data);
-      return res.status(response.status).json({ error: data?.error?.message || "Anthropic API error" });
-    }
-
+    if (!response.ok) return res.status(response.status).json({ error: data?.error?.message || "API error", details: data });
     return res.status(200).json(data);
-  } catch (error) {
-    console.error("Server error:", error.message);
-    return res.status(500).json({ error: error.message });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 }
