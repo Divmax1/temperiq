@@ -621,7 +621,7 @@ function Profile({ user, temperament, percentages, isPremium, onLogout, onRetake
     if (navigator.share){navigator.share({title:"My Temperiq Result",text:txt,url:window.location.href}).catch(()=>{});}
     else{navigator.clipboard?.writeText(txt).then(()=>showToast("Copied to clipboard!"));}
   };
-  const handleSupport=()=>{window.location.href="mailto:support@temperiq.app?subject=Temperiq Support&body=Hi, I need help with: ";};
+  const handleSupport=()=>{window.location.href="mailto:maxwelldivine27@gmail.com?subject=Temperiq Support&body=Hi, I need help with: ";};
   const menu=[
     {label:"Retake Temperament Quiz",fn:onRetake,  icon:"✦"},
     {label:"Share My Results",        fn:handleShare,icon:"↗"},
