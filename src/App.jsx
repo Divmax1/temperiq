@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// ── Supabase client ──────────────────────────────────────────────────────────
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-// ── Styles ───────────────────────────────────────────────────────────────────
 const FontLink = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -53,7 +51,6 @@ const FontLink = () => (
   `}</style>
 );
 
-// ── DATA ─────────────────────────────────────────────────────────────────────
 const TEMPERAMENTS = {
   Choleric:   { color:"#c94040", bg:"rgba(201,64,64,0.1)",  element:"🔥", tagline:"The Natural Leader",   description:"Bold, driven, and decisive. You take charge of every room you enter. Your ambition and confidence inspire those around you.", strengths:["Natural leadership","Goal-oriented","Decisive","Energetic","Confident","Productive"], weaknesses:["Impatient","Domineering","Hot-tempered","Stubborn","Insensitive","Workaholic"], career:["Executive","Entrepreneur","Military Officer","Lawyer","Surgeon"], relationship:"You need a partner who respects your ambition but can gently soften your edges. You love deeply but express it through acts of service.", advice:"Practice pausing before reacting. Your strength multiplies when paired with empathy." },
   Melancholic:{ color:"#3a5fb0", bg:"rgba(58,95,176,0.1)",  element:"💧", tagline:"The Deep Thinker",     description:"Thoughtful, analytical, and gifted. You see the world with remarkable depth and pursue excellence in everything.", strengths:["Analytical","Detail-oriented","Creative","Empathetic","Loyal","Perfectionist"], weaknesses:["Overthinking","Self-critical","Moody","Pessimistic","Withdrawn","Indecisive"], career:["Scientist","Artist","Writer","Accountant","Philosopher"], relationship:"You love with extraordinary depth. You need a partner who creates a safe space for your sensitivity and appreciates your loyalty.", advice:"Give yourself the same grace you give others. Your standards are high — remember you're human." },
@@ -84,17 +81,42 @@ const DAILY_QUOTES = {
 };
 
 const ROLE_ADVICE = {
-  Choleric:   {spouse:"As a spouse, your Choleric energy means you protect fiercely. Learn to slow down and listen — your partner needs presence, not just solutions.",student:"In school, you excel at leadership roles. Channel your drive into study groups. Manage your frustration when teachers move too slowly.",employer:"As an employer, you set a blazing pace. Remember: your team needs clarity and encouragement, not just speed. Celebrate small wins.",employee:"As an employee, you chafe under micro-management. Communicate your ambitions clearly to your boss and request autonomy on projects.",teacher:"As a teacher, your authority commands respect. Balance discipline with warmth — students follow you best when they feel safe."},
-  Melancholic:{spouse:"You love with extraordinary depth. Express your affection verbally — your partner may not see what's happening in your rich inner world.",student:"You are a natural student. Watch for perfectionism paralysis. Done and good enough sometimes beats perfect and late.",employer:"As a leader, you set high standards. Be mindful that your silence can feel like disapproval. Verbalize appreciation explicitly.",employee:"You thrive with clear expectations and quality work. Ask for detailed feedback — it fuels you.",teacher:"You are a deeply gifted teacher. Your students will remember your passion for years."},
-  Sanguine:   {spouse:"You are the light in your relationship. Work on consistency — your partner needs to know they can count on you even when it's not exciting.",student:"School can bore you. Find the story in every subject. Build a study routine so your energy doesn't scatter before exams.",employer:"You inspire your team like few others can. Build systems that work even when your excitement drops.",employee:"You energize any workplace. Ask for variety in your tasks and socialize strategically.",teacher:"You are unforgettable in the classroom. Your students are engaged and excited."},
-  Phlegmatic: {spouse:"You are the most faithful partner. Speak your needs — your quiet nature can cause resentment to build silently.",student:"You are steady and dependable in school. Push yourself slightly outside comfort zones.",employer:"Your team trusts you completely. Learn to make hard decisions faster.",employee:"You are the backbone every team needs. Advocate for yourself more.",teacher:"Students feel completely safe with you. Introduce gentle challenges."},
+  Choleric:   {individual:"As a Choleric, your drive is unmatched. Channel it with intention — not every battle is worth fighting.",spouse:"As a spouse, your Choleric energy means you protect fiercely. Learn to slow down and listen — your partner needs presence, not just solutions.",employer:"As an employer, you set a blazing pace. Remember: your team needs clarity and encouragement, not just speed. Celebrate small wins.",employee:"As an employee, you chafe under micro-management. Communicate your ambitions clearly to your boss and request autonomy on projects.",teacher:"As a teacher, your authority commands respect. Balance discipline with warmth — students follow you best when they feel safe.",student:"In school, you excel at leadership roles. Channel your drive into study groups. Manage your frustration when teachers move too slowly.",other:"Your drive is a rare gift. Use it intentionally — focus it on what truly matters to you."},
+  Melancholic:{individual:"Your depth of thought is your greatest asset. Give yourself permission to act before everything is perfect.",spouse:"You love with extraordinary depth. Express your affection verbally — your partner may not see what's happening in your rich inner world.",employer:"As a leader, you set high standards. Be mindful that your silence can feel like disapproval. Verbalize appreciation explicitly.",employee:"You thrive with clear expectations and quality work. Ask for detailed feedback — it fuels you.",teacher:"You are a deeply gifted teacher. Your students will remember your passion for years.",student:"You are a natural student. Watch for perfectionism paralysis. Done and good enough sometimes beats perfect and late.",other:"Your analytical mind sees what others miss. Trust your insights and share them more boldly."},
+  Sanguine:   {individual:"You are the light in every room. Work on consistency — people need to know they can count on you.",spouse:"You are the light in your relationship. Work on consistency — your partner needs to know they can count on you even when it's not exciting.",employer:"You inspire your team like few others can. Build systems that work even when your excitement drops.",employee:"You energize any workplace. Ask for variety in your tasks and socialize strategically.",teacher:"You are unforgettable in the classroom. Your students are engaged and excited.",student:"School can bore you. Find the story in every subject. Build a study routine so your energy doesn't scatter before exams.",other:"Your enthusiasm opens doors. Back it up with follow-through and you'll be unstoppable."},
+  Phlegmatic: {individual:"You are the steady anchor everyone needs. Learn to speak your needs — the world benefits from your wisdom out loud.",spouse:"You are the most faithful partner. Speak your needs — your quiet nature can cause resentment to build silently.",employer:"Your team trusts you completely. Learn to make hard decisions faster.",employee:"You are the backbone every team needs. Advocate for yourself more.",teacher:"Students feel completely safe with you. Introduce gentle challenges.",student:"You are steady and dependable in school. Push yourself slightly outside comfort zones.",other:"Your calm is a superpower. Don't let it become invisibility — speak up and let people see you."},
+};
+
+// ── Daily message limit helpers ──────────────────────────────────────────────
+const DAILY_LIMIT = 10;
+
+const getDailyUsage = () => {
+  try {
+    const stored = localStorage.getItem("tiq_daily_usage");
+    if (!stored) return { count: 0, date: "" };
+    return JSON.parse(stored);
+  } catch { return { count: 0, date: "" }; }
+};
+
+const getTodayStr = () => new Date().toISOString().slice(0, 10);
+
+const getRemainingMessages = () => {
+  const { count, date } = getDailyUsage();
+  if (date !== getTodayStr()) return DAILY_LIMIT;
+  return Math.max(DAILY_LIMIT - count, 0);
+};
+
+const incrementDailyUsage = () => {
+  const today = getTodayStr();
+  const { count, date } = getDailyUsage();
+  const newCount = date === today ? count + 1 : 1;
+  localStorage.setItem("tiq_daily_usage", JSON.stringify({ count: newCount, date: today }));
 };
 
 const shuffleArray = arr => {
   const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;
 };
 
-// Full pool of 50 questions — 12 are randomly picked per user each time
 const QUESTION_POOL = [
   {q:"Your boss gives the team a tough deadline. What do you do?",options:[["Jump in and start delegating immediately","C"],["Sit down and map out every step carefully","M"],["Rally everyone's energy and lift the mood","S"],["Stay calm and check that everyone is okay first","P"]]},
   {q:"You're at a party where you barely know anyone. You usually:",options:[["Start introducing yourself and own the conversation","C"],["Find one interesting person and go really deep","M"],["Work the whole room — 5 new friends before it ends","S"],["Stick with the one person you know and enjoy the vibe","P"]]},
@@ -148,7 +170,6 @@ const QUESTION_POOL = [
   {q:"What would you change about yourself if you could?",options:[["Be more patient with people who move slowly","C"],["Stop overthinking and criticizing myself so much","M"],["Be more consistent and follow through more often","S"],["Speak up for myself more and stop avoiding conflict","P"]]},
 ];
 
-// Pick 12 random questions from the pool and shuffle their options
 const getRandomQuestions = () => {
   const pool = [...QUESTION_POOL];
   for (let i = pool.length-1; i > 0; i--) {
@@ -158,7 +179,6 @@ const getRandomQuestions = () => {
   return pool.slice(0,12).map(q=>({...q, options: shuffleArray(q.options)}));
 };
 
-// ── ICONS ────────────────────────────────────────────────────────────────────
 const Icon = ({ name, size=20 }) => {
   const icons = {
     home:    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
@@ -177,7 +197,6 @@ const Icon = ({ name, size=20 }) => {
   return icons[name] || null;
 };
 
-// ── LOADING SCREEN ────────────────────────────────────────────────────────────
 function LoadingScreen() {
   return (
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:20}}>
@@ -188,12 +207,12 @@ function LoadingScreen() {
   );
 }
 
-// ── ONBOARDING ────────────────────────────────────────────────────────────────
 const slides = [
   {icon:"✦",title:"Know Who You Are",    subtitle:"Discover your classical temperament — the ancient framework that reveals your deepest self.",          bg1:"rgba(212,168,67,0.2)", bg2:"rgba(201,64,64,0.1)"},
   {icon:"◈",title:"Unlock Your Potential",subtitle:"Understand your strengths, manage your weaknesses, and live with purpose every single day.",          bg1:"rgba(58,95,176,0.2)",  bg2:"rgba(58,125,92,0.1)"},
   {icon:"❋",title:"Thrive in Every Role", subtitle:"Better relationships. Stronger leadership. Wiser parenting. One personality insight at a time.",     bg1:"rgba(200,160,42,0.15)",bg2:"rgba(58,95,176,0.15)"},
 ];
+
 function Onboarding({ onDone }) {
   const [slide,setSlide]=useState(0); const s=slides[slide];
   return (
@@ -221,9 +240,6 @@ function Onboarding({ onDone }) {
   );
 }
 
-// ── AUTH ──────────────────────────────────────────────────────────────────────
-const [otherRole, setOtherRole] = useState("")
-
 function Auth({ onAuth }) {
   const [mode,setMode]       = useState("signup");
   const [name,setName]       = useState("");
@@ -231,6 +247,7 @@ function Auth({ onAuth }) {
   const [password,setPassword]=useState("");
   const [showPw,setShowPw]   = useState(false);
   const [role,setRole]       = useState("");
+  const [otherText,setOtherText] = useState("");
   const [error,setError]     = useState("");
   const [loading,setLoading] = useState(false);
 
@@ -243,16 +260,14 @@ function Auth({ onAuth }) {
   const pwValid = pwRules.every(r=>r.pass);
 
   const roles=[
-  {id:"individual", label:"Individual",   icon:"🧍"},
-  {id:"spouse",     label:"Couple/Spouse", icon:"💑"},
-  {id:"employer",   label:"Entrepreneur",  icon:"🚀"},
-  {id:"student",    label:"Student",       icon:"🎓"},
-  {id:"other",      label:"Other",         icon:"✦"},
-];
-
-  {role==="other"&&(
-  <input className="input" placeholder="Describe your role..." value={otherRole} onChange={e=>setOtherRole(e.target.value)} style={{marginTop:8}}/>
-)}
+    {id:"individual", label:"Individual",  icon:"🧍"},
+    {id:"spouse",     label:"Spouse",      icon:"💑"},
+    {id:"employer",   label:"Employer",    icon:"🏢"},
+    {id:"employee",   label:"Employee",    icon:"💼"},
+    {id:"teacher",    label:"Teacher",     icon:"👩‍🏫"},
+    {id:"student",    label:"Student",     icon:"🎓"},
+    {id:"other",      label:"Other",       icon:"✦"},
+  ];
 
   const handleSubmit = async () => {
     setError("");
@@ -260,18 +275,19 @@ function Auth({ onAuth }) {
     if (mode==="signup"){
       if (!name.trim()) return setError("Please enter your name.");
       if (!role)        return setError("Please select your role.");
+      if (role==="other"&&!otherText.trim()) return setError("Please describe your role.");
       if (!pwValid)     return setError("Password doesn't meet all requirements below.");
     }
     setLoading(true);
+    const finalRole = role==="other" ? otherText.trim() : role;
     try {
       if (mode==="signup"){
-        const {data,error:e} = await supabase.auth.signUp({email,password,options:{data:{name,role}}});
+        const {data,error:e} = await supabase.auth.signUp({email,password,options:{data:{name,role:finalRole}}});
         if (e) throw e;
-        // Save profile to users table
         if (data.user){
-          await supabase.from("users").upsert({id:data.user.id,name,email,role:role==="other"?otherRole:role});
+          await supabase.from("users").upsert({id:data.user.id,name,email,role:finalRole});
         }
-        onAuth({name,email,role:role==="other"?otherRole:role,uid:data.user?.id});
+        onAuth({name,email,role:finalRole,uid:data.user?.id});
       } else {
         const {data,error:e} = await supabase.auth.signInWithPassword({email,password});
         if (e) throw e;
@@ -345,6 +361,9 @@ function Auth({ onAuth }) {
                   </div>
                 ))}
               </div>
+              {role==="other"&&(
+                <input className="input" style={{marginTop:10}} placeholder="Describe your role..." value={otherText} onChange={e=>setOtherText(e.target.value)}/>
+              )}
             </div>
           )}
           <button className="btn-primary" onClick={handleSubmit} disabled={loading} style={{width:"100%",marginTop:4}}>
@@ -362,7 +381,6 @@ function Auth({ onAuth }) {
   );
 }
 
-// ── QUIZ ──────────────────────────────────────────────────────────────────────
 function Quiz({ onComplete }) {
   const [current,setCurrent] = useState(0);
   const [answers,setAnswers] = useState([]);
@@ -372,7 +390,6 @@ function Quiz({ onComplete }) {
     const next=[...answers,type];
     if (current+1>=shuffled.length){
       const counts={C:0,M:0,S:0,P:0}; next.forEach(a=>counts[a]++);
-      const map={C:"Choleric",M:"Melancholic",S:"Sanguine",P:"Phlegmatic"};
       const total=next.length;
       const pcts={Choleric:Math.round(counts.C/total*100),Melancholic:Math.round(counts.M/total*100),Sanguine:Math.round(counts.S/total*100),Phlegmatic:Math.round(counts.P/total*100)};
       const sorted=Object.entries(pcts).sort((a,b)=>b[1]-a[1]);
@@ -388,7 +405,7 @@ function Quiz({ onComplete }) {
       <div style={{marginBottom:32}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            {current>0&&<button onClick={handleBack} style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--muted)"}} onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--gold)";e.currentTarget.style.color="var(--gold)"}} onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.color="var(--muted)"}}><Icon name="back" size={16}/></button>}
+            {current>0&&<button onClick={handleBack} style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--muted)"}}><Icon name="back" size={16}/></button>}
             <span style={{fontFamily:"var(--font-display)",fontSize:18,color:"var(--gold)"}}>TEMPERIQ</span>
           </div>
           <span style={{fontSize:13,color:"var(--muted)"}}>{current+1} / {shuffled.length}</span>
@@ -402,7 +419,7 @@ function Quiz({ onComplete }) {
           {q.options.map(([text,type],i)=>{
             const sel=prev===type;
             return (
-              <div key={i} onClick={()=>handleAnswer(type)} style={{padding:"18px 20px",border:`1px solid ${sel?"var(--gold)":"var(--border)"}`,borderRadius:16,cursor:"pointer",background:sel?"rgba(212,168,67,0.08)":"var(--surface)",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--gold)";e.currentTarget.style.background="rgba(212,168,67,0.06)"}} onMouseLeave={e=>{e.currentTarget.style.borderColor=sel?"var(--gold)":"var(--border)";e.currentTarget.style.background=sel?"rgba(212,168,67,0.08)":"var(--surface)"}}>
+              <div key={i} onClick={()=>handleAnswer(type)} style={{padding:"18px 20px",border:`1px solid ${sel?"var(--gold)":"var(--border)"}`,borderRadius:16,cursor:"pointer",background:sel?"rgba(212,168,67,0.08)":"var(--surface)",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"all .2s"}}>
                 <span style={{fontSize:15,lineHeight:1.5}}>{text}</span>
                 {sel?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>:<Icon name="arrow" size={16}/>}
               </div>
@@ -414,7 +431,6 @@ function Quiz({ onComplete }) {
   );
 }
 
-// ── RESULT ────────────────────────────────────────────────────────────────────
 function Result({ temperament, percentages, secondaryTemp, onContinue }) {
   const [stage,setStage]=useState(0);
   const t=TEMPERAMENTS[temperament];
@@ -451,13 +467,15 @@ function Result({ temperament, percentages, secondaryTemp, onContinue }) {
   );
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function Dashboard({ user, temperament, percentages, secondaryTemp, isPremium, onUpgrade, onRetake }) {
   const [tab,setTab]=useState("overview");
   const t=TEMPERAMENTS[temperament];
-  const today=new Date().getDay();
-  const dailyQuote=(DAILY_QUOTES[temperament]||DAILY_QUOTES.Choleric)[today%7];
-  const roleAdvice=ROLE_ADVICE[temperament]?.[user.role]||"";
+  // Use day-of-year so quote changes every calendar day
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+  const quotes = DAILY_QUOTES[temperament] || DAILY_QUOTES.Choleric;
+  const dailyQuote = quotes[dayOfYear % quotes.length];
+  const roleKey = Object.keys(ROLE_ADVICE[temperament]||{}).find(k=>k===user.role) || "individual";
+  const roleAdvice = (ROLE_ADVICE[temperament]||{})[roleKey] || (ROLE_ADVICE[temperament]||{})["individual"] || "";
   const tMap={Choleric:"C",Melancholic:"M",Sanguine:"S",Phlegmatic:"P"};
   const blend=secondaryTemp?BLENDS[tMap[temperament]+tMap[secondaryTemp]]:null;
   const sortedPcts=percentages?Object.entries(percentages).sort((a,b)=>b[1]-a[1]):[];
@@ -520,28 +538,13 @@ function Dashboard({ user, temperament, percentages, secondaryTemp, isPremium, o
   );
 }
 
-// ── CHATBOT ───────────────────────────────────────────────────────────────────
-const FREE_MSG_LIMIT = 50;
 function Chatbot({ user, temperament, isPremium, onUpgrade }) {
   const t=TEMPERAMENTS[temperament];
   const [messages,setMessages]=useState([{role:"assistant",content:`Hey ${user.name} 👋 I'm your Temperiq guide. As a ${temperament}, you have real strengths — and some blind spots worth knowing. What's on your mind?`}]);
-  const [input,setInput]=useState(""); const [loading,setLoading]=useState(false);
-  const getDailyUsage = () => {
-  try {
-    const stored = JSON.parse(localStorage.getItem("tiq_daily") || "{}");
-    const today = new Date().toDateString();
-    if (stored.date !== today) return 0;
-    return stored.count || 0;
-  } catch { return 0; }
-};
-
-const setDailyUsage = (n) => {
-  localStorage.setItem("tiq_daily", JSON.stringify({ date: new Date().toDateString(), count: n }));
-};
-
-const [freeUsed, setFreeUsed] = useState(getDailyUsage);
-const DAILY_LIMIT = 10;
-const limitHit = !isPremium && freeUsed >= DAILY_LIMIT;
+  const [input,setInput]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [remaining,setRemaining]=useState(()=>getRemainingMessages());
+  const limitHit=!isPremium&&remaining<=0;
   const bottomRef=useRef(null);
   useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:"smooth"}); },[messages,loading]);
 
@@ -550,21 +553,22 @@ const limitHit = !isPremium && freeUsed >= DAILY_LIMIT;
     const userMsg={role:"user",content:input};
     const newMsgs=[...messages,userMsg];
     setMessages(newMsgs); setInput(""); setLoading(true);
-          if (!isPremium) {
-        const next = freeUsed + 1;
-        setFreeUsed(next);
-        setDailyUsage(next);
-      }
+    if (!isPremium) {
+      incrementDailyUsage();
+      setRemaining(getRemainingMessages());
+    }
     try {
       const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         system:`You are the Temperiq AI guide. Keep it simple, warm, and real — use everyday language. The user's name is ${user.name}. Their temperament is ${temperament}. Their role is ${user.role}. Talk like a wise friend. Give practical advice they can use today. Keep replies to 2-3 sentences unless they ask for more. Use their strengths: ${t.strengths.slice(0,3).join(", ")} and watch-outs: ${t.weaknesses.slice(0,3).join(", ")}.`,
         messages:newMsgs.filter((m,i)=>!(i===0&&m.role==="assistant")),
       })});
       const data=await res.json();
-      let reply = data?.error || data?.details?.error?.message || "I'm having trouble connecting. Please try again.";
+      let reply="I'm having trouble connecting. Please try again.";
       if (data.content&&Array.isArray(data.content)) reply=data.content.map(c=>c.type==="text"?c.text:"").filter(Boolean).join("")||reply;
       setMessages(m=>[...m,{role:"assistant",content:reply}]);
-    } catch { setMessages(m=>[...m,{role:"assistant",content:"I'm having trouble connecting. Please try again."}]); }
+    } catch {
+      setMessages(m=>[...m,{role:"assistant",content:"I'm having trouble connecting. Please try again."}]);
+    }
     setLoading(false);
   };
 
@@ -575,7 +579,7 @@ const limitHit = !isPremium && freeUsed >= DAILY_LIMIT;
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:40,height:40,borderRadius:"50%",background:t.bg,border:`1px solid ${t.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{t.element}</div>
           <div style={{flex:1}}><p style={{fontFamily:"var(--font-display)",fontSize:17}}>Temperiq Guide</p><p style={{fontSize:12,color:"var(--gold)"}}>● Online</p></div>
-          {!isPremium&&<div style={{fontSize:12,color:freeUsed>=DAILY_LIMIT?"#f87171":"var(--muted)",background:"var(--surface2)",padding:"4px 10px",borderRadius:20,border:`1px solid ${freeUsed>=DAILY_LIMIT?"rgba(248,113,113,0.3)":"var(--border)"}`}}>{Math.max(DAILY_LIMIT - freeUsed, 0)} left today</div>}
+          {!isPremium&&<div style={{fontSize:12,color:remaining<=0?"#f87171":"var(--muted)",background:"var(--surface2)",padding:"4px 10px",borderRadius:20,border:`1px solid ${remaining<=0?"rgba(248,113,113,0.3)":"var(--border)"}`}}>{remaining} left today</div>}
         </div>
       </div>
       <div style={{flex:1,overflow:"auto",padding:"16px"}}>
@@ -584,25 +588,33 @@ const limitHit = !isPremium && freeUsed >= DAILY_LIMIT;
         {messages.length===1&&<div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:12}}>{prompts.map(p=><button key={p} onClick={()=>setInput(p)} style={{padding:"8px 14px",background:"var(--surface2)",border:"1px solid var(--border)",borderRadius:20,color:"var(--muted)",fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>{p}</button>)}</div>}
         <div ref={bottomRef}/>
       </div>
-      {limitHit&&<div style={{margin:"0 16px 12px",padding:18,background:"rgba(212,168,67,0.06)",border:"1px solid rgba(212,168,67,0.2)",borderRadius:16,textAlign:"center"}}><p style={{fontSize:14,color:"var(--gold)",marginBottom:4,fontWeight:600}}>You've used your 10 free messages today</p>
-                      <p style={{fontSize:13,color:"var(--muted)",marginBottom:12}}>Come back tomorrow or upgrade for unlimited access.</p><button className="btn-primary" onClick={onUpgrade} style={{fontSize:13,padding:"10px 28px"}}>Unlock Premium</button></div>}
+      {limitHit&&<div style={{margin:"0 16px 12px",padding:18,background:"rgba(212,168,67,0.06)",border:"1px solid rgba(212,168,67,0.2)",borderRadius:16,textAlign:"center"}}><p style={{fontSize:14,color:"var(--gold)",marginBottom:4,fontWeight:600}}>You've used your {DAILY_LIMIT} free messages for today</p><p style={{fontSize:13,color:"var(--muted)",marginBottom:12}}>Come back tomorrow or upgrade for unlimited access.</p><button className="btn-primary" onClick={onUpgrade} style={{fontSize:13,padding:"10px 28px"}}>Unlock Premium</button></div>}
       <div style={{padding:"12px 16px",borderTop:"1px solid var(--border)",display:"flex",gap:10}}>
-        <input className="input" style={{flex:1,opacity:limitHit?.4:1}} placeholder={limitHit?"Upgrade to continue...":"Ask your guide anything..."} value={input} onChange={e=>!limitHit&&setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} disabled={limitHit}/>
+        <input className="input" style={{flex:1,opacity:limitHit?.4:1}} placeholder={limitHit?"Come back tomorrow or upgrade...":"Ask your guide anything..."} value={input} onChange={e=>!limitHit&&setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} disabled={limitHit}/>
         <button onClick={send} disabled={loading||!input.trim()||limitHit} style={{width:48,height:48,borderRadius:14,background:"var(--gold)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",opacity:input.trim()&&!loading&&!limitHit?1:.5,flexShrink:0,transition:"opacity .2s"}}><Icon name="send" size={18}/></button>
       </div>
     </div>
   );
 }
 
-// ── PREMIUM MODAL ─────────────────────────────────────────────────────────────
 function PremiumModal({ user, onClose, onPurchase }) {
   const plans = [
-    { id:"basic",   name:"Personal",     amount:199,  naira:2000,  color:"#c8a02a", features:["Full trait analysis","Daily quotes","Role-based advice","Unlimited chatbot"] },
-    { id:"pro",     name:"Relationships",amount:299,  naira:3000,  color:"#3a5fb0", popular:true, features:["Everything in Personal","Couple compatibility","Conflict resolution guide","Marriage & parenting advice"] },
-    { id:"premium", name:"Professional", amount:599,  naira:6000,  color:"#c94040", features:["Everything in Relationships","Team temperament reports","Employee management tips","Classroom dynamics guide","Priority support"] },
+    { id:"basic",   name:"Personal",     naira:2000,  color:"#c8a02a", features:["Full trait analysis","Daily quotes","Role-based advice","Unlimited chatbot"] },
+    { id:"pro",     name:"Relationships",naira:3000,  color:"#3a5fb0", popular:true, features:["Everything in Personal","Couple compatibility","Conflict resolution guide","Marriage & parenting advice"] },
+    { id:"premium", name:"Professional", naira:6000,  color:"#c94040", features:["Everything in Relationships","Team temperament reports","Employee management tips","Classroom dynamics guide","Priority support"] },
   ];
 
+  useEffect(() => {
+    if (!window.PaystackPop) {
+      const script = document.createElement("script");
+      script.src = "https://js.paystack.co/v1/inline.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
   const handlePurchase = (plan) => {
+    if (!window.PaystackPop) return alert("Payment is loading, please try again in a moment.");
     const handler = window.PaystackPop.setup({
       key: "pk_live_160490bad518eb07dec58b0dafeacb8e57927d77",
       email: user?.email || "user@temperiq.app",
@@ -615,15 +627,6 @@ function PremiumModal({ user, onClose, onPurchase }) {
     });
     handler.openIframe();
   };
-
-  useEffect(() => {
-    if (!window.PaystackPop) {
-      const script = document.createElement("script");
-      script.src = "https://js.paystack.co/v1/inline.js";
-      script.async = true;
-      document.body.appendChild(script);
-    }
-  }, []);
 
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:100,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
@@ -662,7 +665,6 @@ function PremiumModal({ user, onClose, onPurchase }) {
   );
 }
 
-// ── BOTTOM NAV ────────────────────────────────────────────────────────────────
 function BottomNav({ active, onChange, isPremium, onUpgrade }) {
   return (
     <div style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--surface)",borderTop:"1px solid var(--border)",display:"flex",zIndex:50}}>
@@ -674,7 +676,6 @@ function BottomNav({ active, onChange, isPremium, onUpgrade }) {
   );
 }
 
-// ── PROFILE ───────────────────────────────────────────────────────────────────
 function Profile({ user, temperament, percentages, isPremium, onLogout, onRetake, onUpgrade }) {
   const t=TEMPERAMENTS[temperament];
   const [toast,setToast]=useState("");
@@ -705,7 +706,7 @@ function Profile({ user, temperament, percentages, isPremium, onLogout, onRetake
       <div className="card fade-up" style={{padding:20,marginBottom:12}}>
         <p style={{fontSize:12,color:"var(--muted)",letterSpacing:2,textTransform:"uppercase",marginBottom:16}}>Your Plan</p>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div><p style={{fontFamily:"var(--font-display)",fontSize:18}}>{isPremium?"Premium Member":"Free Plan"}</p><p style={{fontSize:13,color:"var(--muted)",marginTop:4}}>{isPremium?"Full access unlocked ✓":`${FREE_MSG_LIMIT} free guide messages`}</p></div>
+          <div><p style={{fontFamily:"var(--font-display)",fontSize:18}}>{isPremium?"Premium Member":"Free Plan"}</p><p style={{fontSize:13,color:"var(--muted)",marginTop:4}}>{isPremium?"Full access unlocked ✓":`${DAILY_LIMIT} free messages per day`}</p></div>
           {isPremium?<span style={{color:"var(--gold)",fontSize:22}}>★</span>:<button className="btn-primary" onClick={onUpgrade} style={{fontSize:12,padding:"8px 16px"}}>Upgrade</button>}
         </div>
       </div>
@@ -725,7 +726,6 @@ function Profile({ user, temperament, percentages, isPremium, onLogout, onRetake
   );
 }
 
-// ── APP ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen,setScreen]           = useState("loading");
   const [user,setUser]               = useState(null);
@@ -736,27 +736,19 @@ export default function App() {
   const [showPremium,setShowPremium] = useState(false);
   const [navTab,setNavTab]           = useState("home");
 
-  // ── On app load: check if user is already logged in ──────────────────────
   useEffect(()=>{
     const loadUserData = async (u) => {
       try {
-        // Load profile
-        const { data: profile, error: profileErr } = await supabase
-          .from("users").select("*").eq("id", u.id).single();
+        const { data: profile, error: profileErr } = await supabase.from("users").select("*").eq("id", u.id).single();
         if (profileErr && profileErr.code !== "PGRST116") console.error("Profile error:", profileErr);
-
         setUser({
           name: profile?.name || u.user_metadata?.name || u.email.split("@")[0],
           email: u.email,
           role: profile?.role || u.user_metadata?.role || "individual",
           uid: u.id
         });
-
-        // Load saved quiz results
-        const { data: results, error: resultsErr } = await supabase
-          .from("results").select("*").eq("id", u.id).single();
+        const { data: results, error: resultsErr } = await supabase.from("results").select("*").eq("id", u.id).single();
         if (resultsErr && resultsErr.code !== "PGRST116") console.error("Results error:", resultsErr);
-
         if (results?.temperament) {
           setTemperament(results.temperament);
           setPercentages(results.percentages);
@@ -772,21 +764,14 @@ export default function App() {
       }
     };
 
-    // Check for existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadUserData(session.user);
-      } else {
-        setScreen("onboarding");
-      }
+      if (session?.user) { loadUserData(session.user); }
+      else { setScreen("onboarding"); }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        loadUserData(session.user);
-      } else if (event === "SIGNED_OUT") {
-        setScreen("onboarding");
-      }
+      if (event === "SIGNED_IN" && session?.user) { loadUserData(session.user); }
+      else if (event === "SIGNED_OUT") { setScreen("onboarding"); }
     });
     return () => subscription.unsubscribe();
   }, []);
