@@ -526,8 +526,22 @@ function Chatbot({ user, temperament, isPremium, onUpgrade }) {
   const t=TEMPERAMENTS[temperament];
   const [messages,setMessages]=useState([{role:"assistant",content:`Hey ${user.name} 👋 I'm your Temperiq guide. As a ${temperament}, you have real strengths — and some blind spots worth knowing. What's on your mind?`}]);
   const [input,setInput]=useState(""); const [loading,setLoading]=useState(false);
-  const [freeUsed,setFreeUsed]=useState(0);
-  const limitHit=!isPremium&&freeUsed>=FREE_MSG_LIMIT;
+  const getDailyUsage = () => {
+  try {
+    const stored = JSON.parse(localStorage.getItem("tiq_daily") || "{}");
+    const today = new Date().toDateString();
+    if (stored.date !== today) return 0;
+    return stored.count || 0;
+  } catch { return 0; }
+};
+
+const setDailyUsage = (n) => {
+  localStorage.setItem("tiq_daily", JSON.stringify({ date: new Date().toDateString(), count: n }));
+};
+
+const [freeUsed, setFreeUsed] = useState(getDailyUsage);
+const DAILY_LIMIT = 10;
+const limitHit = !isPremium && freeUsed >= DAILY_LIMIT;
   const bottomRef=useRef(null);
   useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:"smooth"}); },[messages,loading]);
 
@@ -536,7 +550,11 @@ function Chatbot({ user, temperament, isPremium, onUpgrade }) {
     const userMsg={role:"user",content:input};
     const newMsgs=[...messages,userMsg];
     setMessages(newMsgs); setInput(""); setLoading(true);
-    if (!isPremium) setFreeUsed(n=>n+1);
+          if (!isPremium) {
+        const next = freeUsed + 1;
+        setFreeUsed(next);
+        setDailyUsage(next);
+      }
     try {
       const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         system:`You are the Temperiq AI guide. Keep it simple, warm, and real — use everyday language. The user's name is ${user.name}. Their temperament is ${temperament}. Their role is ${user.role}. Talk like a wise friend. Give practical advice they can use today. Keep replies to 2-3 sentences unless they ask for more. Use their strengths: ${t.strengths.slice(0,3).join(", ")} and watch-outs: ${t.weaknesses.slice(0,3).join(", ")}.`,
@@ -557,7 +575,7 @@ function Chatbot({ user, temperament, isPremium, onUpgrade }) {
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:40,height:40,borderRadius:"50%",background:t.bg,border:`1px solid ${t.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{t.element}</div>
           <div style={{flex:1}}><p style={{fontFamily:"var(--font-display)",fontSize:17}}>Temperiq Guide</p><p style={{fontSize:12,color:"var(--gold)"}}>● Online</p></div>
-          {!isPremium&&<div style={{fontSize:12,color:freeUsed>=FREE_MSG_LIMIT?"#f87171":"var(--muted)",background:"var(--surface2)",padding:"4px 10px",borderRadius:20,border:`1px solid ${freeUsed>=FREE_MSG_LIMIT?"rgba(248,113,113,0.3)":"var(--border)"}`}}>{Math.max(FREE_MSG_LIMIT-freeUsed,0)} free left</div>}
+          {!isPremium&&<div style={{fontSize:12,color:freeUsed>=DAILY_LIMIT?"#f87171":"var(--muted)",background:"var(--surface2)",padding:"4px 10px",borderRadius:20,border:`1px solid ${freeUsed>=DAILY_LIMIT?"rgba(248,113,113,0.3)":"var(--border)"}`}}>{Math.max(DAILY_LIMIT - freeUsed, 0)} left today</div>}
         </div>
       </div>
       <div style={{flex:1,overflow:"auto",padding:"16px"}}>
@@ -566,7 +584,8 @@ function Chatbot({ user, temperament, isPremium, onUpgrade }) {
         {messages.length===1&&<div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:12}}>{prompts.map(p=><button key={p} onClick={()=>setInput(p)} style={{padding:"8px 14px",background:"var(--surface2)",border:"1px solid var(--border)",borderRadius:20,color:"var(--muted)",fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>{p}</button>)}</div>}
         <div ref={bottomRef}/>
       </div>
-      {limitHit&&<div style={{margin:"0 16px 12px",padding:18,background:"rgba(212,168,67,0.06)",border:"1px solid rgba(212,168,67,0.2)",borderRadius:16,textAlign:"center"}}><p style={{fontSize:14,color:"var(--gold)",marginBottom:4,fontWeight:600}}>You've used your {FREE_MSG_LIMIT} free messages</p><p style={{fontSize:13,color:"var(--muted)",marginBottom:12}}>Upgrade to keep chatting anytime.</p><button className="btn-primary" onClick={onUpgrade} style={{fontSize:13,padding:"10px 28px"}}>Unlock Premium</button></div>}
+      {limitHit&&<div style={{margin:"0 16px 12px",padding:18,background:"rgba(212,168,67,0.06)",border:"1px solid rgba(212,168,67,0.2)",borderRadius:16,textAlign:"center"}}><p style={{fontSize:14,color:"var(--gold)",marginBottom:4,fontWeight:600}}>You've used your 10 free messages today</p>
+                      <p style={{fontSize:13,color:"var(--muted)",marginBottom:12}}>Come back tomorrow or upgrade for unlimited access.</p><button className="btn-primary" onClick={onUpgrade} style={{fontSize:13,padding:"10px 28px"}}>Unlock Premium</button></div>}
       <div style={{padding:"12px 16px",borderTop:"1px solid var(--border)",display:"flex",gap:10}}>
         <input className="input" style={{flex:1,opacity:limitHit?.4:1}} placeholder={limitHit?"Upgrade to continue...":"Ask your guide anything..."} value={input} onChange={e=>!limitHit&&setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} disabled={limitHit}/>
         <button onClick={send} disabled={loading||!input.trim()||limitHit} style={{width:48,height:48,borderRadius:14,background:"var(--gold)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",opacity:input.trim()&&!loading&&!limitHit?1:.5,flexShrink:0,transition:"opacity .2s"}}><Icon name="send" size={18}/></button>
