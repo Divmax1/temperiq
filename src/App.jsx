@@ -568,12 +568,36 @@ function Chatbot({ user, temperament, isPremium, onUpgrade }) {
 }
 
 // ── PREMIUM MODAL ─────────────────────────────────────────────────────────────
-function PremiumModal({ onClose, onPurchase }) {
-  const plans=[
-    {id:"basic",   name:"Personal",     price:"$1.99",period:"/mo",color:"#c8a02a",features:["Full trait analysis","Daily quotes","Role-based advice","Unlimited chatbot"]},
-    {id:"pro",     name:"Relationships",price:"$2.99",period:"/mo",color:"#3a5fb0",popular:true,features:["Everything in Personal","Couple compatibility","Conflict resolution guide","Marriage & parenting advice"]},
-    {id:"premium", name:"Professional", price:"$5.99",period:"/mo",color:"#c94040",features:["Everything in Relationships","Team temperament reports","Employee management tips","Classroom dynamics guide","Priority support"]},
+function PremiumModal({ user, onClose, onPurchase }) {
+  const plans = [
+    { id:"basic",   name:"Personal",     amount:199,  naira:2000,  color:"#c8a02a", features:["Full trait analysis","Daily quotes","Role-based advice","Unlimited chatbot"] },
+    { id:"pro",     name:"Relationships",amount:299,  naira:3000,  color:"#3a5fb0", popular:true, features:["Everything in Personal","Couple compatibility","Conflict resolution guide","Marriage & parenting advice"] },
+    { id:"premium", name:"Professional", amount:599,  naira:6000,  color:"#c94040", features:["Everything in Relationships","Team temperament reports","Employee management tips","Classroom dynamics guide","Priority support"] },
   ];
+
+  const handlePurchase = (plan) => {
+    const handler = window.PaystackPop.setup({
+      key: "pk_live_160490bad518eb07dec58b0dafeacb8e57927d77",
+      email: user?.email || "user@temperiq.app",
+      amount: plan.naira * 100,
+      currency: "NGN",
+      ref: "TEMPERIQ_" + Date.now(),
+      metadata: { plan: plan.id, name: user?.name },
+      onSuccess: () => { onPurchase(plan.id); },
+      onCancel: () => {},
+    });
+    handler.openIframe();
+  };
+
+  useEffect(() => {
+    if (!window.PaystackPop) {
+      const script = document.createElement("script");
+      script.src = "https://js.paystack.co/v1/inline.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:100,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
       <div style={{background:"var(--surface)",borderRadius:"24px 24px 0 0",padding:"28px 0 40px",width:"100%",maxWidth:600,animation:"slideUp .3s ease"}} onClick={e=>e.stopPropagation()}>
@@ -586,9 +610,22 @@ function PremiumModal({ onClose, onPurchase }) {
           {plans.map(plan=>(
             <div key={plan.id} style={{minWidth:255,flex:"0 0 255px",padding:20,border:`2px solid ${plan.popular?plan.color:"var(--border)"}`,borderRadius:20,background:plan.popular?`${plan.color}14`:"var(--surface2)",position:"relative",scrollSnapAlign:"start"}}>
               {plan.popular&&<div style={{position:"absolute",top:-10,right:14,background:plan.color,color:"white",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:10,letterSpacing:1}}>POPULAR</div>}
-              <div style={{marginBottom:14}}><p style={{fontFamily:"var(--font-display)",fontSize:20,color:plan.color,marginBottom:4}}>{plan.name}</p><span style={{fontFamily:"var(--font-display)",fontSize:28,fontWeight:700}}>{plan.price}</span><span style={{fontSize:12,color:"var(--muted)"}}>{plan.period}</span></div>
-              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>{plan.features.map(f=><div key={f} style={{display:"flex",gap:8,alignItems:"flex-start"}}><span style={{color:plan.color,fontSize:13,marginTop:1,flexShrink:0}}>✓</span><span style={{fontSize:13,color:"var(--muted)",lineHeight:1.4}}>{f}</span></div>)}</div>
-              <button onClick={()=>onPurchase(plan.id)} style={{width:"100%",padding:"12px",borderRadius:12,border:`1px solid ${plan.color}`,background:plan.popular?plan.color:"transparent",color:plan.popular?"white":plan.color,cursor:"pointer",fontFamily:"var(--font-body)",fontWeight:600,fontSize:14}}>Get {plan.name}</button>
+              <div style={{marginBottom:14}}>
+                <p style={{fontFamily:"var(--font-display)",fontSize:20,color:plan.color,marginBottom:4}}>{plan.name}</p>
+                <span style={{fontFamily:"var(--font-display)",fontSize:28,fontWeight:700}}>₦{plan.naira.toLocaleString()}</span>
+                <span style={{fontSize:12,color:"var(--muted)"}}>/mo</span>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+                {plan.features.map(f=>(
+                  <div key={f} style={{display:"flex",gap:8,alignItems:"flex-start"}}>
+                    <span style={{color:plan.color,fontSize:13,marginTop:1,flexShrink:0}}>✓</span>
+                    <span style={{fontSize:13,color:"var(--muted)",lineHeight:1.4}}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>handlePurchase(plan)} style={{width:"100%",padding:"12px",borderRadius:12,border:`1px solid ${plan.color}`,background:plan.popular?plan.color:"transparent",color:plan.popular?"white":plan.color,cursor:"pointer",fontFamily:"var(--font-body)",fontWeight:600,fontSize:14}}>
+                Get {plan.name}
+              </button>
             </div>
           ))}
         </div>
