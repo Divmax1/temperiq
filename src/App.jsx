@@ -216,6 +216,7 @@ function Onboarding({ onDone }) {
                 :<button className="btn-primary" onClick={onDone} style={{width:"100%"}}>Discover Your Temperament</button>}
         {slide<2&&<button className="btn-ghost" onClick={onDone} style={{width:"100%"}}>Skip</button>}
       </div>
+      <p style={{position:"absolute",bottom:24,fontSize:12,color:"var(--muted)",letterSpacing:1}}>© Maxwell Divine 2027</p>
     </div>
   );
 }
