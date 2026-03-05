@@ -535,7 +535,7 @@ function Chatbot({ user, temperament, isPremium, onUpgrade }) {
         messages:newMsgs.filter((m,i)=>!(i===0&&m.role==="assistant")),
       })});
       const data=await res.json();
-      let reply="I'm having trouble connecting. Please try again.";
+      let reply = data?.error || data?.details?.error?.message || "I'm having trouble connecting. Please try again.";
       if (data.content&&Array.isArray(data.content)) reply=data.content.map(c=>c.type==="text"?c.text:"").filter(Boolean).join("")||reply;
       setMessages(m=>[...m,{role:"assistant",content:reply}]);
     } catch { setMessages(m=>[...m,{role:"assistant",content:"I'm having trouble connecting. Please try again."}]); }
